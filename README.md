@@ -1,123 +1,53 @@
-# MaskFusion
+Este repositório contém um sistema RGB-D SLAM em tempo real, que é consciente de objetos, semântico e dinâmico, indo além dos sistemas tradicionais que geram apenas mapas baseados em geometria. Ele reconhece, segmenta e atribui rótulos de classe semântica a diferentes objetos na cena, enquanto os rastreia e reconstrói mesmo quando se movem de forma independente em relação à câmera.
 
-This repository contains MaskFusion, a real-time, object-aware, semantic and dynamic RGB-D SLAM system that goes beyond traditional systems that output a geometry-only map -- MaskFusion recognizes, segments and assigns semantic class labels to different objects in the scene, while tracking and reconstructing them even when they move independently from the camera.
-
-As an RGB-D camera scans a cluttered scene, image-based instance-level semantic segmentation creates semantic object masks that enable real-time object recognition and the creation of an object-level representation for the world map. Unlike previous recognition-based SLAM systems, MaskFusion does not require prior knowledge or known models of the objects it can recognize and can deal with multiple independent motions. Unlike recent semantics enabled SLAM systems that perform voxel-level semantic segmentation MaskFusion takes full advantage of using instance-level semantic segmentation to enable semantic labels to be fused into an object-aware map. We show augmented-reality applications, that demonstrate the unique features of the map output by MaskFusion: instance-aware, semantic and dynamic.
-
-More information and the paper can be found [here](http://visual.cs.ucl.ac.uk/pubs/maskfusion/index.html).
-
+Conforme uma câmera RGB-D escaneia uma cena complexa, a segmentação semântica em nível de instância baseada em imagem cria máscaras semânticas de objetos que permitem o reconhecimento em tempo real de objetos e a criação de uma representação em nível de objeto para o mapa do mundo. Ao contrário dos sistemas SLAM baseados em reconhecimento anteriores, Ele não requer conhecimento prévio ou modelos conhecidos dos objetos que pode reconhecer e pode lidar com múltiplos movimentos independentes. Em contraste com os sistemas SLAM habilitados para semântica mais recentes, que realizam a segmentação semântica em nível de voxel, Ele aproveita ao máximo a segmentação semântica em nível de instância para permitir que rótulos semânticos sejam fundidos em um mapa consciente de objetos. Apresentamos aplicações de realidade aumentada que demonstram as características exclusivas do mapa gerado por ele: consciente de instância, semântico e dinâmico.
 [![Figure of MaskFusion](figures/teaser.jpg "Click me to see a video.")](http://visual.cs.ucl.ac.uk/pubs/maskfusion/MaskFusion.mp4)
 
-## Publication
 
-* [MaskFusion: Real-Time Recognition, Tracking and Reconstruction of Multiple Moving Objects](https://arxiv.org/abs/1804.09194), Martin Rünz, Maud Buffier, Lourdes Agapito, ISMAR '18
+## Construindo: 
+O script `build.sh` mostra passo a passo como é construído e quais dependências são necessárias. As seguintes opções do CMake são obrigatórias: `PYTHON_VE_PATH`, `MASKFUSION_MASK_RCNN_DIR`, e é recomendado configurar `MASKFUSION_GPUS_MASKRCNN` também.
 
-## Building MaskFusion
-The script `build.sh` shows step-by-step how MaskFusion is built and which dependencies are required.
-The following CMake options are mandatory: `PYTHON_VE_PATH`, `MASKFUSION_MASK_RCNN_DIR` and it is recommended to set `MASKFUSION_GPUS_MASKRCNN` as well.
+### CMake opções:
+- `MASKFUSION_GPUS_MASKRCNN`: Lista de GPUs usadas pelo MaskRCNN, idealmente distintas da GPU usada pelo SLAM.
+- `MASKFUSION_GPU_SLAM`: GPU utilizada pelo sistema SLAM, que deve ser a GPU usada pelo OpenGL.
+- `MASKFUSION_MASK_RCNN_DIR`: Caminho para a sua instalação do [Matterport MaskRCNN](https://github.com/matterport/Mask_RCNN).
+- `MASKFUSION_NUM_GSURFELS`: Número de surfels alocados para o modelo do ambiente.
+- `MASKFUSION_NUM_OSURFELS`: Número de surfels alocados por modelo de objeto.
+- `PYTHON_VE_PATH`: Caminho para o ambiente Python virtual (raiz), usado para o TensorFlow.
 
-### CMake options:
-* `MASKFUSION_GPUS_MASKRCNN`: List of GPUs used by MaskRCNN, ideally disjunct from SLAM GPU
-* `MASKFUSION_GPU_SLAM`: GPU use by SLAM system, this has to be the GPU used by OpenGL
-* `MASKFUSION_MASK_RCNN_DIR`: Path to your [Matterport MaskRCNN](https://github.com/matterport/Mask_RCNN) installation
-* `MASKFUSION_NUM_GSURFELS`: Surfels allocated for environment model
-* `MASKFUSION_NUM_OSURFELS`: Surfels allocated per object model
-* `PYTHON_VE_PATH`: Path to (the root of) virtual python environment, used for tensorflow
-
-### Dependencies
+### Dependencias:
 * Python3
 * Tensorflow (>1.3.0, tested with 1.8.0)
 * Keras (>2.1.2)
 * MaskRCNN
 
 
-## Running MaskFusion
+## Rodando
 
-* **Select the object categories** you would like to label by MaskRCNN. To do so, adjust the array `FILTER_CLASSES` within `Core/Segmentation/MaskRCNN/MaskRCNN.py.in`. For instance, `FILTER_CLASSES = ['person', 'skateboard', 'teddy bear']` results in _skateboards_ and _teddy bears_ being tracked. In the current setup, regions that are labelled as _person_ are ignored. An empty array indicates that all possible labels should be used.
+- **Selecione as categorias de objetos** que você gostaria de rotular com o MaskRCNN. Para fazer isso, ajuste a matriz `FILTER_CLASSES` dentro de `Core/Segmentation/MaskRCNN/MaskRCNN.py.in`. Por exemplo, `FILTER_CLASSES = ['person', 'skateboard', 'teddy bear']` resultará no rastreamento de _skateboards_ e _teddy bears_. Na configuração atual, as regiões rotuladas como _person_ são ignoradas. Uma matriz vazia indica que todos os rótulos possíveis devem ser usados.
 
-* Tracking of individual objects can easily be enabled / disabled by calling `makeStatic()` and `makeNonStatic()` of instances of the `Model` class. The overall system runs more robustly if objects are only tracked when being touched by a person. We are **not** providing hand-detection software at the moment.
+- O rastreamento de objetos individuais pode ser facilmente ativado/desativado chamando os métodos `makeStatic()` e `makeNonStatic()` das instâncias da classe `Model`. O sistema como um todo funciona de forma mais robusta quando os objetos são rastreados apenas quando estão sendo tocados por uma pessoa. Não estamos fornecendo software de detecção de mãos no momento.
 
-## Dataset and evaluation tools
+## Conjunto de Dados e Ferramentas de Avaliação:
 
-### Tools
-* Recorder for klg files: https://github.com/mp3guy/Logger2
-* Viewer for klg files: https://github.com/mp3guy/LogView
-* Images -> klg converter: https://github.com/martinruenz/dataset-tools/tree/master/convert_imagesToKlg
-* klg -> images/pointclouds: https://github.com/martinruenz/dataset-tools/tree/master/convert_klg
-* Evaluate segmentation (intersection-over-union): https://github.com/martinruenz/dataset-tools/tree/master/evaluate_segmentation
-* Scripts to create synthetic datasets with blender: https://github.com/martinruenz/dataset-tools/tree/master/blender
+### Ferramentas
+* Gravador para arquivos klg: [https://github.com/mp3guy/Logger2](https://github.com/mp3guy/Logger2)
+* Visualizador para arquivos klg: [https://github.com/mp3guy/LogView](https://github.com/mp3guy/LogView)
+* Conversor de imagens para klg: [https://github.com/martinruenz/dataset-tools/tree/master/convert_imagesToKlg](https://github.com/martinruenz/dataset-tools/tree/master/convert_imagesToKlg)
+* klg para imagens/nuvens de pontos: [https://github.com/martinruenz/dataset-tools/tree/master/convert_klg](https://github.com/martinruenz/dataset-tools/tree/master/convert_klg)
+* Avaliar segmentação (interseção sobre união): [https://github.com/martinruenz/dataset-tools/tree/master/evaluate_segmentation](https://github.com/martinruenz/dataset-tools/tree/master/evaluate_segmentation)
+* Scripts para criar conjuntos de dados sintéticos com o Blender: [https://github.com/martinruenz/dataset-tools/tree/master/blender](https://github.com/martinruenz/dataset-tools/tree/master/blender)
 
 ## Hardware
-In order to run MaskFusion smoothly, you need a fast GPU with enough memory to store multiple models simultaneously. We used an Nvidia TitanX for most experiments, but also successfully tested MaskFusion on a laptop computer with an Nvidia GeForce™ GTX 960M. If your GPU memory is limited, the `MASKFUSION_NUM_GSURFELS` and `MASKFUSION_NUM_OSURFELS` CMake options can help reduce the memory footprint per model (global/object, respectively).
-While the tracking stage of MaskFusion calls for a fast GPU, the motion based segmentation performance depends on the CPU and accordingly, having a nice processor helps as well.
+Para executar sem problemas, você precisa de uma GPU rápida com memória suficiente para armazenar vários modelos simultaneamente. Utilizamos uma Nvidia TitanX na maioria dos experimentos, mas também testamos com sucesso o programa em um laptop com uma Nvidia GeForce™ GTX 960M. Se a memória da sua GPU for limitada, as opções CMake `MASKFUSION_NUM_GSURFELS` e `MASKFUSION_NUM_OSURFELS` podem ajudar a reduzir a pegada de memória por modelo (global/objeto, respectivamente).
+Enquanto a etapa de rastreamento dele requer uma GPU rápida, o desempenho da segmentação baseada em movimento depende da CPU, e, portanto, ter um processador potente também é benéfico.
 
-## ElasticFusion
-The overall architecture and terminal-interface of MaskFusion is based on [ElasticFusion](https://github.com/mp3guy/ElasticFusion) and the ElasticFusion [readme file](https://github.com/mp3guy/ElasticFusion/blob/master/README.md) contains further useful information.
 
-## New command line parameters (see [source-file](https://github.com/martinruenz/maskfusion/blob/master/GUI/MainController.cpp#L34-L96))
+### Usando `cv::imshow` para debug
 
-* **-method:**        Method used for segmentation (cofusion, maskfusion)
-* **-frameQ:**        Set size of frame-queue manually
-* **-run**:           Run dataset immediately (otherwise start paused).
-* **-static**:        Disable multi-model fusion.
-* **-confO**:         Initial surfel confidence threshold for objects (default 0.01).
-* **-confG**:         Initial surfel confidence threshold for scene (default 10.00).
-* **-segMinNew**:     Min size of new object segments (relative to image size)
-* **-segMaxNew**:     Max size of new object segments (relative to image size)
-* **-offset**:        Offset between creating models
-* **-keep**:          Keep all models (even bad, deactivated)
-* **-dir**:           Processes a log-directory (Default: Color####.png + Depth####.exr [+ Mask####.png])
-* **-depthdir**:      Separate depth directory (==dir if not provided)
-* **-maskdir**:       Separate mask directory (==dir if not provided)
-* **-exportdir**:     Export results to this directory, otherwise not exported
-* **-basedir**:       Treat the above paths relative to this one (like depthdir = basedir + depthdir, default "")
-* **-colorprefix**:   Specify prefix of color files (=="" or =="Color" if not provided)
-* **-depthprefix**:   Specify prefix of depth files (=="" or =="Depth" if not provided)
-* **-maskprefix**:    Specify prefix of mask files (=="" or =="Mask" if not provided)
-* **-indexW**:        Number of digits of the indexes (==4 if not provided)
-* **-nm**:            Ignore Mask####.png images as soon as the provided frame was reached.
-* **-es**:            Export segmentation
-* **-ev**:            Export viewport images
-* **-el**:            Export label images
-* **-em**:            Export models (point-cloud)
-* **-en**:            Export normal images
-* **-ep**:            Export poses after finishing run (just before quitting if '-q')
-* **-or**:            Outlier rejection strength (default 3).
+`cv::imshow(...)` requer a biblioteca `libopencv_highgui.so`, que pode (se GTK for usado) depender de `libmirprotobuf.so` e, portanto, de uma versão específica do *protobuf*. No entanto, o programa também vai exigir uma versão específica do *protobuf*, e pode acontecer que as duas versões entrem em conflito, levando a uma mensagem de erro como esta: *"Este programa requer a versão 3.5.0 da biblioteca de tempo de execução do Protocol Buffer, mas a versão instalada é 2.6.1. Atualize sua biblioteca. Se você compilou o programa sozinho, certifique-se de que seus cabeçalhos sejam da mesma versão do Protocol Buffers que sua biblioteca de tempo de link."*
 
-## Tips
-
-### Running MaskRCNN offline, before executing MaskFusion
-You can use the script `Core/Segmentation/MaskRCNN/offline_runner.py` to extract masks readable by MaskFusion and visualisations. Use the `-maskdir` parameter to input these masks into MaskFusion.
-Example usage: `./offline_runner.py -i /path/to/rgb/frames -o /path/to/output/masks --filter teddy_bear`
-
-The visualization of the output will look like this:
-
-![Figure MaskRCNN](figures/segmentation.jpg)
-
-### Resolve the exception '***Could not open MaskRCNN module***':
-* Check python output (run directly in terminal)
-* Check value of CMake option `MASKFUSION_MASK_RCNN_DIR`
-* Check value of CMake option `MASKFUSION_PYTHON_VE_PATH`
-* Check if python package [pycocotools](https://github.com/waleedka/coco) is missing
-* Check if python package [imgaug](https://github.com/aleju/imgaug) is missing
-* Check if enough GPU memory is available
-* Check variables `PYTHON_VE_PATH` and `MASK_RCNN_DIR` in `MaskRCNN.py` in your build directory
-
-### Resolve the exception '***cudaSafeCall() Runtime API error : unknown error.***' at start-up
-One reason for having this exception at start-up can be that OpenGL and Cuda are unable to share memory. Double-check the cmake parameter `MASKFUSION_GPU_SLAM`, especially in a multi-gpu setup.
-
-### Using cv::imshow for debugging
-`cv::imshow(...)` requires the library `libopencv_highgui.so`, which might (if GTK is used) depend on `libmirprotobuf.so` and hence on a specific *protobuf* version. The program, however, is also going to require a specific *protobuf* version and it can happen that the two versions are clashing leading to an error message like this: *This program requires version 3.5.0 of the Protocol Buffer runtime library, but the installed version is 2.6.1.  Please update your library.  If you compiled the program yourself, make sure that your headers are from the same version of Protocol Buffers as your link-time library.*
-The easiest fix is to compile OpenCV with `-DWITH_QT=ON`, which removes the *protobuf* dependency of `libopencv_highgui.so`.
-
+A solução mais simples é compilar o OpenCV com `-DWITH_QT=ON`, o que remove a dependência do *protobuf* de `libopencv_highgui.so`.
 ### Crash (segfault) when loading python module ***MaskRCNN.py***
 We noticed that loading the python module `MaskRCNN.py` can crash when the executable links to *hdf5* as this is potentially incompatible with the version required by *tensorflow*. Make sure to use the *opencv* library that is built in the deps subdirectory, which does not require linking to *hdf5*. (Set `OpenCV_DIR=<path>/deps/opencv/build` in cmake)
 
-## License
-MaskFusion includes the third-party open-source software ElasticFusion, which itself includes third-party open-source software. Each of these components have their own license.
-
-You can find the ElasticFusion license in the file [LICENSE-ElasticFusion.txt](LICENSE-ElasticFusion.txt) and
-the MaskFusion license in the file [LICENSE-MaskFusion.txt](LICENSE-MaskFusion.txt)
-
-## Acknowledgements
-This work has been supported by the SecondHands project, funded from the EU Horizon 2020 Research and Innovation programme under grant agreement No 643950.
